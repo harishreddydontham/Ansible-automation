@@ -1,0 +1,12 @@
+Class 1:
+1. Deploy Ansible Lab Using Terraform Code.
+2. Understanding Terraform Inventory Files.
+3. Running Adhoc commands:
+ansible -i invfile pvt -m ping
+ansible -i invfile pvt -m setup
+ansible -i invfile pvt -m shell -a "df -h | grep -i root"
+ansible -i invfile pvt -m shell -a 'free -h'
+ansible -i invfile pvt -m shell -a uptime
+ansible -i invfile pvt -m shell -a 'du -h /etc/passwd'
+ansible -i invfile pvt -m user -a "name=superstar state=present"
+ansible -i invfile pvt -m shell -a "whoami && apt update && apt instal -y unzip net-tools" --become
