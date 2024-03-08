@@ -1,0 +1,76 @@
+---
+- name: Play For Installing Nginx On WebServers
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  serial: 1
+  vars:
+    AWS_ACCOUNT: "721834156908"
+    OS_DIST_VERSION: "{{ ansible_facts['distribution'] }}"
+  tasks:
+  - name: Print Variable
+    debug:
+     msg: System {{ inventory_hostname }} has variable {{ AWS_ACCOUNT }} and {{ OS_DIST_VERSION }}
+
+  - name: Print Variable Sesitive
+    debug:
+     msg: System {{ inventory_hostname }} has variable {{ AWS_ACCOUNT }} and {{ OS_DIST_VERSION }}
+    no_log: True
+
+  - name: Perform apt update & Install basic packages
+    shell: apt update && apt install -y unzip jq net-tools stress 
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+    timeout: 30
+    tags:
+     - tools
+
+  - name: Install Nginx Webserver Application
+    apt:
+      name: nginx
+      state: latest
+      update_cache: yes
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+    timeout: 30
+
+  - name: Start Nginx Service
+    service:
+      name: nginx
+      state: started
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+  tags:
+  - nginx
+
+- name: Play For Copying Webserver Files
+  hosts: testserver01:testserver02:testserver03
+  become: yes
+  become_user: root
+  tasks:
+  - name: Copy html file
+    copy:
+      src: /tmp/nginxfiles/index.html
+      dest: /var/www/html/index.nginx-debian.html
+      owner: root
+      group: root
+      mode: '0644'
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+
+  - name: Copy scorekeeper.js file
+    copy:
+      src: /tmp/nginxfiles/scorekeeper.js
+      dest: /var/www/html/scorekeeper.js
+      owner: root
+      group: root
+      mode: '0644'
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+
+  - name: Copy style.css file
+    copy:
+      src: /tmp/nginxfiles/style.css
+      dest: /var/www/html/style.css
+      owner: root
+      group: root
+      mode: '0644'
+    when: (ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version'] == "20.04")
+  tags:
+  - files
