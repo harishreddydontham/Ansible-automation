@@ -6,15 +6,14 @@
   become_user: root
   tags: nginx
   vars:
-   - VERSION: 1.18.0
-   - port: 80
+   [version: 1.0.0, port: 80, state: present]
   tasks:
   - name: perform apt update 
     shell: apt-get update
   - name: Install Nginx
     shell: apt-get install -y nginx 
   - name: start Nginx server
-    shell: service nginx start && service nginx status    
+    shell: service nginx start && systemctl nginx enable  
 
 
 - name: Installing base tools
