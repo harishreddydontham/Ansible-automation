@@ -1,0 +1,33 @@
+---
+- name: Install nginx on servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tags: nginx
+  vars:
+   - VERSION: 1.18.0
+   - port: 80
+  tasks:
+  - name: Install Nginx
+    shell: apt-get install -y nginx 
+  - name: start Nginx server
+    shell: service nginx start && service nginx status    
+
+
+- name: Installing base tools
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tags: basetools
+  tasks:
+  - name: perform apt update 
+    shell: apt-get update
+  - name: Install base tools
+    apt: name={{ item }}  state=present
+    with_items:
+     - unzip
+     - certbot
+     - net-tools
+     - jq    
