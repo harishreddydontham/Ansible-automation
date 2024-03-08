@@ -13,7 +13,7 @@
   - name: Install Nginx
     shell: apt-get install -y nginx 
   - name: start Nginx server
-    shell: service nginx start && systemctl nginx enable  
+    shell: service nginx start && systemctl enable nginx 
 
 
 - name: Installing base tools
