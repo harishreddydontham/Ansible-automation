@@ -1,0 +1,71 @@
+---
+- name: Check & Install AWS CLI
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tasks:
+  - name: Check AWS CLI exists
+    shell: aws --version
+    register: aws_version_output
+    ignore_errors: yes
+
+  - name: Print Register Variable
+    debug:
+      msg: "{{ aws_version_output }}"
+
+  - name: Print Return Code(rc)
+    debug:
+      msg: "{{ aws_version_output.rc }}"
+
+  - name: Install Dependencies
+    shell: apt update && apt install -y unzip
+    when: aws_version_output.rc != 0
+
+  - name: Install AWS CLI
+    shell: |
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      sudo ./aws/install
+    when: aws_version_output.rc != 0
+
+  - name: Check AWS CLI exists Again
+    shell: aws --version
+    when: aws_version_output.rc != 0
+
+  tags:
+  - aws
+
+- name: Check & Install Terraform
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tasks:
+  - name: Check Terraform exists
+    shell: terraform version
+    register: terraform_version_output
+    ignore_errors: yes
+
+  - name: Print Return Code(rc)
+    debug:
+      msg: "{{ terraform_version_output.rc }}"
+
+  - name: Install Dependencies
+    shell: apt update && apt install -y unzip
+    when: terraform_version_output.rc != 0
+
+  - name: Install Terraform CLI
+    shell: |
+      curl "https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip" -o "terraform.zip"
+      unzip terraform.zip
+      mv terraform /usr/local/bin
+      sudo terraform version
+    when: terraform_version_output.rc != 0
+
+  - name: Check Terraform Version Again
+    shell: terraform version
+
+  tags:
+  - terraform
+
