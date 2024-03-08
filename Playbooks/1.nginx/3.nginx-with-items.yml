@@ -1,0 +1,26 @@
+---
+- name: Play For Copying Additional Files To Servers
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tasks:
+  - name: Copy application file
+    copy:
+      src: "{{ item }}"
+      dest: /var/www/html/{{ item }}
+      owner: root
+      group: root
+      mode: '0644'
+    with_items:
+    - contact.html
+    - orders.html
+    - aboutus.html
+  - name: Create Testusers
+    user:
+      name: "{{ item }}"
+      shell: /bin/bash
+      groups: sudo
+      append: yes
+    with_items:
+      [testuser001, testuser002, testuser003]
