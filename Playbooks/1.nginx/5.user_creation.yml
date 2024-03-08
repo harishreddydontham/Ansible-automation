@@ -1,0 +1,16 @@
+---
+- name: Play For Creating Multiple Users
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  tasks:
+  - name: Create Users
+    user:
+      name: "{{ item.name }}"
+      uid: "{{ item.uid }}"
+      groups: "{{ item.groups }}"
+    with_items:
+    - { name: testuser100, uid: 2001, groups: "ubuntu" }
+    - { name: testuser200, uid: 2002, groups: "admin" }
+    - { name: testuser300, uid: 2003, groups: "users" }
