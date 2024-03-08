@@ -1,0 +1,87 @@
+Adding ansible root public key to the nodes using the user_data:
+echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDfJFuw1FU2a6+paWjB7c8Wi/KXGYzgNtHznegZ9L03Raw5Kh/Fpje9bLYsDJLzBJlIGh/r+RwfkHLHoPyjVZ8LypwBbwtCf27TuKDNFnJM8vu632Il6eZNdZToggmZ8REnVZysNi0zSxHOSTfg+zemakOfAXmujZbTbP561ZqvjutJb28WjC8ckDiDKpYksRG9mmXTJoiB+OCVAhVSShCSUKk1vVblj2phY1w8wkLB4SMCqFf58TWjotUV2ERsiacdkaJYuk6w71TEf8EaHA/F8mcz0Kr6rTGDEYWYpOgZJOoM2QOX5ybToEMM9FE2UkrVrvK5hfJ61l7vpEBJxCL7 root@ip-172-19-1-171' >> /root/.ssh/authorized_keys
+
+
+------------------------------------------CACHING-ANSIBLE-FACTS----------------------------------------
+To configure fact caching using redis, enable it in ansible.cfg as follows:
+[defaults]
+gathering = smart
+fact_caching = redis or jsonfile
+fact_caching_timeout = 86400 # seconds
+
+Example:
+Give the below configuration just under the [defaults] in ansible.cfg
+[defaults]
+gathering = smart
+fact_caching = jsonfile
+fact_caching_connection = /tmp/factsjson
+fact_caching_timeout = 86400
+
+Run sample playbook as below:
+---
+  - name: Test Playbook
+    hosts: all
+    tasks:
+      - name: Run Apt Update
+        shell: apt update
+
+Check /tmp/factsjson for the facts and run the playbook again and no 'gather_facts' happens as they are cached
+in the /tmp/factsjson file. You can remove rm -rf /tmp/factsjson and run the playbook again to see the 
+facts are cached.
+
+For Redis: 
+https://dev.to/koh_sh/redis-can-make-ansible-only-a-bit-faster-39g7#:~:text=Ansible%20has%20a%20function%20called,every%20time%20you%20run%20Playbook.
+
+Deploy the Ansible Lab with Anible 2.9 on Ubuntu 18.04
+apt update
+apt install -y python3-pip
+pip3 install redis
+
+nano /etc/ansible/ansible.cfg
+[defaults]
+gathering = smart
+fact_caching_timeout = 86400
+fact_caching = redis
+fact_caching_prefix = ansible_b22_facts_
+fact_caching_connection = ansibleredis:6379:0
+
+docker run --rm -dit  -p 6379:6379 --network ansible_nw --name ansibleredis redis
+
+docker exec -it ansibleredis redis-cli
+127.0.0.1:6379> keys *
+127.0.0.1:6379> mget "ansible_facts_web1"
+127.0.0.1:6379> mget "ansible_facts_app1"
+127.0.0.1:6379> mget "ansible_facts_db1"
+
+Deploy a AWS ElastCache with t2.micro which will take 10 min to install.
+Copy the end point ansiblefacts.qcz1df.ng.0001.use1.cache.amazonaws.com:6379 to ansible.cfg
+Run the sample playbook to gather the facts.
+Create a ubuntu:18.04 container  and install redis in it.
+apt-get install redis-server -y
+redis-cli -h ansiblefacts.qcz1df.ng.0001.use1.cache.amazonaws.com
+
+ansiblefacts.qcz1df.ng.0001.use1.cache.amazonaws.com:6379> keys *
+ 1) "ansible_facts_db2"
+ 2) "ansible_facts_db4"
+ 3) "ansible_cache_keys"
+ 4) "ansible_facts_app3"
+ 5) "ansible_facts_web2"
+ 6) "ansible_facts_localhost"
+ 7) "ansible_facts_web1"
+ 8) "ansible_facts_db1"
+ 9) "ansible_facts_web3"
+10) "ansible_facts_app2"
+11) "ansible_facts_app1"
+12) "ansible_facts_db3"
+
+ansiblefacts.qcz1df.ng.0001.use1.cache.amazonaws.com:6379> mget "ansible_facts_db2"
+
+To delete all keys in the REDIS run FLUSHALL.
+
+root@controller:/# ll /tmp/factsjson/
+total 92
+drwxr-xr-x 2 root root  4096 Mar 23 02:13 ./
+drwxrwxrwt 1 root root  4096 Mar 23 02:14 ../
+-rw-r--r-- 1 root root 27335 Mar 23 02:13 web1
+-rw-r--r-- 1 root root 27335 Mar 23 02:13 web2
+-rw-r--r-- 1 root root 27335 Mar 23 02:13 web3

@@ -1,0 +1,98 @@
+---
+- name: Install Redis Server
+  hosts: testserver01
+  become: true
+  tasks:
+    - name: Install Redis dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - build-essential
+        - tcl
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04'
+
+    - name: Check Redis Status
+      shell: systemctl status redis --no-pager
+      register: redis_status
+      ignore_errors: true
+
+    - name: Download and extract Redis source code
+      get_url:
+        url: "http://download.redis.io/releases/redis-6.2.5.tar.gz"
+        dest: "/tmp/redis.tar.gz"
+      #delegate_to: localhost
+      when: redis_status.rc != 0
+
+    - name: Extract Redis source code
+      unarchive:
+        src: "/tmp/redis.tar.gz"
+        dest: "/tmp"
+        remote_src: yes
+      when: redis_status.rc != 0
+
+    - name: Compile and install Redis
+      shell: | 
+        cd /tmp/redis-6.2.5
+        make
+        make install
+      args:
+        executable: /bin/bash
+      when: redis_status.rc != 0
+
+    - name: Configure Redis
+      copy:
+        src: redis.conf
+        dest: /etc/redis.conf
+        owner: root
+        group: root
+        mode: '0644'
+      #when: redis_status.rc != 0
+      notify:
+      - Restart Redis
+      - Backup Redis Conf File
+      # - Download Redis Backup Config File Flat
+      # - Download Redis Backup Config File Without Flat
+
+    - name: Copy Redis systemd service config file
+      copy:
+        src: redis.service
+        dest: /etc/systemd/system/redis.service
+        owner: root
+        group: root
+        mode: '0644'
+      #when: redis_status.rc != 0
+      notify: 
+      - Restart Redis
+      - Backup Redis Conf File
+
+    - name: Start Redis service
+      systemd:
+        name: redis
+        state: started
+        enabled: yes
+      when: redis_status.rc != 0
+
+    - name: Checking Deligate Option 
+      shell: hostname
+      delegate_to: localhost #or 127.0.0.1
+      
+  handlers:
+    - name: Backup Redis Conf File
+      shell: rm -rf /tmp/redis.conf_backup && cp /etc/redis.conf /tmp/redis.conf_backup
+
+    - name: Restart Redis
+      systemd:
+        name: redis
+        state: restarted
+
+    - name: Download Redis Backup Config File Flat
+      fetch:
+        src: /tmp/redis.conf_backup
+        dest: /tmp/redis.conf_backup-{{ inventory_hostname }}
+        flat: yes
+    - name: Download Redis Backup Config File Without Flat
+      fetch:
+        src: /tmp/redis.conf_backup
+        dest: /tmp/
+        # flat: yes  #This will download whole path of the file.

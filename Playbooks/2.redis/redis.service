@@ -1,0 +1,13 @@
+[Unit]
+Description=Redis Server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/redis-server /etc/redis.conf
+ExecStop=/usr/local/bin/redis-cli shutdown
+Restart=always
+
+[Install]
+WantedBy=default.target
+
+#I made a change to test the handler
