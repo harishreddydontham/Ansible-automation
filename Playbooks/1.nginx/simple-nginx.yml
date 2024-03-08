@@ -1,6 +1,6 @@
 ---
 - name: Install nginx on servers
-  hosts: all
+  hosts: pvt
   gather_facts: yes
   become: yes
   become_user: root
