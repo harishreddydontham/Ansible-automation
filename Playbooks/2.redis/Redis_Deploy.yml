@@ -1,6 +1,6 @@
 ---
 - name: Install Redis Server
-  hosts: testserver01
+  hosts: pvt
   become: true
   tasks:
     - name: Install Redis dependencies
