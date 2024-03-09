@@ -1,0 +1,53 @@
+#We cannot use && > >> || with commands module but works with SHELL module.
+---
+- name: Testing SHELL & COMMAND & RAW Modules
+  hosts: testserver01
+  become: true
+  become_user: root
+  tasks:
+    - name: Run SHELL Module
+      shell: >
+        echo "Welcome
+        To DevSecOps Class
+        Batch Number B39 ${HOME}"
+      tags:
+      - shell
+
+    - name: Run  Env Using SHELL Variables
+      shell: env && df -h && free
+      tags:
+      - shell
+
+    - name: Run COMMAND Module
+      command: >
+        echo "Welcome
+        To DevSecOps Class
+        Batch Number B39 ${HOME}"
+      tags:
+      - command
+    - name: Run  Env Using COMMAND Variables
+      command: env && df -h && free
+      ignore_errors: yes
+      tags:
+      - command
+    - name: Testing Command Modules
+      command: "{{item}}"
+      with_items:
+      - "free -h > /tmp/free"
+      - "df -h > /tmp/df"
+      ignore_errors: yes
+      tags:
+      - command
+
+    - name: Run RAW Module
+      raw: >
+        echo "Welcome
+        To DevSecOps Class
+        Batch Number B39 ${HOME}"
+      tags:
+      - raw   
+
+    - name: Run  Env Using RAW Variables
+      raw: env && df -h && free 
+      tags:
+      - raw 
