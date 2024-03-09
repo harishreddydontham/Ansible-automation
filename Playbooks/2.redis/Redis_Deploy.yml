@@ -51,8 +51,8 @@
       notify:
       - Restart Redis
       - Backup Redis Conf File
-      # - Download Redis Backup Config File Flat
-      # - Download Redis Backup Config File Without Flat
+      - Download Redis Backup Config File Flat
+      - Download Redis Backup Config File Without Flat
 
     - name: Copy Redis systemd service config file
       copy:
@@ -95,4 +95,4 @@
       fetch:
         src: /tmp/redis.conf_backup
         dest: /tmp/
-        # flat: yes  #This will download whole path of the file.
+        flat: yes  #This will download whole path of the file.

@@ -6,8 +6,12 @@ echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDfJFuw1FU2a6+paWjB7c8Wi/KXGYzgNtHzne
 To configure fact caching using redis, enable it in ansible.cfg as follows:
 [defaults]
 gathering = smart
-fact_caching = redis or jsonfile
-fact_caching_timeout = 86400 # seconds
+fact_caching_timeout = 30
+fact_caching = redis
+fact_caching_prefix = ansible_b39_facts
+fact_caching_connection = 10.38.1.234:6379:0
+
+ # seconds
 
 Example:
 Give the below configuration just under the [defaults] in ansible.cfg
