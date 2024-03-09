@@ -95,4 +95,4 @@
       fetch:
         src: /tmp/redis.conf_backup
         dest: /tmp/
-        flat: yes  #This will download whole path of the file.
+        # flat: yes  #This will download whole path of the file.
