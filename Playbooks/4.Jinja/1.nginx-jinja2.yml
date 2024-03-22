@@ -32,7 +32,7 @@
          - install
        - name: Copy the index.j2 Template to index destination folder.
          template: >
-            src=/root/ansiblecode/Playbooks/4.Jinja/index.j2
+            src=/root/Ansible/Playbooks/4.Jinja/index.j2
             dest=/var/www/html/index.nginx-debian.html
             owner=root
             group=root
@@ -42,7 +42,7 @@
          - j2
        - name: Copy the style files to destination folder.
          copy: >
-            src=/root/ansiblecode/Playbooks/4.Jinja/style.css
+            src=/root/Ansible/Playbooks/4.Jinja/style.css
             dest=/var/www/html/style.css
             owner=root
             group=root
@@ -52,7 +52,7 @@
          - style
        - name: Copy the javascript files to destination folder.
          copy: >
-            src=/root/ansiblecode/Playbooks/4.Jinja/scorekeeper.js
+            src=/root/Ansible/Playbooks/4.Jinja/scorekeeper.js
             dest=/var/www/html/scorekeeper.js
             owner=root
             group=root
