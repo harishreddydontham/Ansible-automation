@@ -1,0 +1,58 @@
+---
+- name: Play For Delete Files and Folders - PLAY 1
+  hosts: pvt
+  gather_facts: no 
+  tasks:
+  - name: Delete Files and Folders - PLAY 1
+    shell: |
+      rm -rf /tmp/{{ inventory_hostname }}
+      rm -rf /tmp/hostname-*
+      rm -rf /tmp/files/
+    delegate_to: 127.0.0.1
+  tags:
+  - play1
+
+- name: Play For Download Files With Folder Name - PLAY 2
+  hosts: pvt
+  gather_facts: no 
+  tasks:
+  - name: ansible copy file from remote to local
+    fetch:
+     src: /etc/mysql/mysql.conf.d/mysqld.cnf
+     dest: /tmp/files/ 
+     #This will create the folder with the machine name and copy the files
+  tags:
+  - play2
+
+- name: Play For Download Files Without Folder Name - PLAY 3
+  hosts: pvt
+  gather_facts: yes
+  become: yes
+  become_user: root
+  serial: 1
+  vars:
+   newhost: "{{ ansible_facts['hostname']}}"
+   nodename: "{{ ansible_facts['nodename']}}"
+  tasks:
+  - name: Generate Random
+    shell: date +%s
+    register: rannumber
+  - debug:
+      var: rannumber.stdout
+  - name: ansible copy file from remote to local using randomname.
+    fetch:
+     src: /etc/hostname
+     dest: /tmp/hostname-{{ rannumber.stdout }}
+     flat: yes
+  - name: ansible copy file from remote to local using hostname.
+    fetch:
+     src: /etc/hostname
+     dest: /tmp/{{ inventory_hostname }}/
+     flat: yes
+  - name: ansible copy file from remote to local using /tmp/my.cnf.
+    fetch:
+     src: /etc/mysql/mysql.conf.d/mysqld.cnf
+     dest: /tmp/my-{{ inventory_hostname }}.cnf
+     flat: yes
+  tags:
+  - play3

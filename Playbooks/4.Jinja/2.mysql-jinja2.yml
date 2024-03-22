@@ -1,0 +1,61 @@
+---
+  - name: Play for Install MySQL Database On Ubuntu Servers
+    hosts: pvt
+    gather_facts: yes
+    become: yes
+    become_user: root
+    vars:
+      mysql_socket: /var/lib/mysql/mysql.sock
+      mysql_port: 3306
+      mysql_data_dir: /var/lib/mysql
+      mysql_pid_file: /var/lib/mysql/mysqld.pid
+      mysql_slow_query_log_enabled: true
+      mysql_slow_query_log: 1
+      mysql_slow_query_log_file: /var/lib/mysql/mysql-slow.log
+      mysql_long_query_time: 3
+      mysql_slow_query_time: 3
+      mysql_innodb_buffer_pool_size: 5734M
+      mysql_innodb_log_file_size: 1433M
+      mysql_max_connections: 682
+      mysql_thread_cache_size: 102
+      mysql_binding_address: "0.0.0.0"
+      hostname: "{{ inventory_hostname }}"
+    tasks:
+       - name: Installing Mysql and Dependencies
+         package:
+          name: "{{item}}"
+          state: present
+          update_cache: yes
+         loop:
+           - mysql-server
+           - mysql-client 
+           - python3-mysqldb
+           - libmysqlclient-dev
+         become: yes
+       - name: Copy the mysql_conf.j2 Template to index destination folder.
+         template: >
+            src=/root/ansiblecode/Playbooks/4.Jinja/mysql_conf.j2
+            dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+            owner=root
+            group=root
+            mode=0644
+       - name: start and enable mysql service
+         service:
+           name: mysql
+           state: started
+           enabled: yes
+       - name: create a new database 
+         mysql_db: >
+           name=myflixdb 
+           state=present 
+           login_user=root
+         tags:
+         - mysql
+       - name: Copy sample data to tmp folder 
+         copy: src=/root/ansiblecode/Playbooks/4.Jinja/dump.sql dest=/tmp/dump.sql
+         tags:
+         - mysql
+       - name: Insert sample data into database
+         mysql_db: name=myflixdb state=import target=/tmp/dump.sql
+         tags:
+         - mysql

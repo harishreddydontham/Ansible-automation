@@ -1,0 +1,24 @@
+---
+- hosts: pvt
+  strategy: free
+  pre_tasks:
+    - name: Delete Files and Folders - PRE_TASK
+      shell: |
+        rm -rf /tmp/{{ inventory_hostname }}
+        rm -rf /tmp/hostname-*
+        rm -rf /tmp/files/
+        rm -rf /tmp/my*
+        ansible -i /root/ansiblecode/invfile pvt -m ping --become
+        terraform init
+        terraform state list
+        echo $(pwd)
+      delegate_to: 127.0.0.1
+  tasks:
+  - name: ansible copy file from remote to local - TASK
+    fetch:
+     src: /etc/mysql/mysql.conf.d/mysqld.cnf
+     dest: /tmp/my-{{ inventory_hostname }}.cnf
+  post_tasks:
+    - name: Check Files In Tmp - POST_TASK
+      shell: ls -al /tmp/ | grep -i cnf | cut -d " " -f 10
+      delegate_to: 127.0.0.1

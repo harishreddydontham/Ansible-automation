@@ -1,0 +1,73 @@
+---
+  - name: Play for Install Nginx on WebServers
+    hosts: pvt
+    gather_facts: yes
+    become: yes
+    become_user: root
+    vars:
+      #Static Variables
+      custom_heading: "Welcome To DevSecOps B39 Batch Training By Sreeharsha Veerapalli"
+      custom_para: "We Are Studying Ansible Templates Practically..!!!"
+      aws_account: "721834156908"
+      friends: ['Sree','Harsha','Raju', 'Kumar', "Eswar", "David"]
+      #Dynamic variables from Ansible Facts
+      todays_date: "{{ ansible_facts['date_time']['date'] }}"
+      host_name: "{{ ansible_facts['hostname'] }}"
+      fqdn_name: "{{ ansible_facts['fqdn'] }}"
+      os_family: "{{ ansible_facts['distribution'] }}"
+      os_dest: "{{ ansible_facts['distribution_version'] }}"
+      ip_address: "{{ ansible_facts['eth0']['ipv4']['address'] }}"
+    tags:
+     - InstallNginx
+    tasks:
+       - name: Run Apt Update
+         shell: apt update
+         tags:
+         - update
+       - name: Install Nginx Server
+         apt: >
+           name=nginx
+           state=present
+         tags:
+         - install
+       - name: Copy the index.j2 Template to index destination folder.
+         template: >
+            src=/root/ansiblecode/Playbooks/4.Jinja/index.j2
+            dest=/var/www/html/index.nginx-debian.html
+            owner=root
+            group=root
+            mode=0644
+         notify: Restart Nginx
+         tags:
+         - j2
+       - name: Copy the style files to destination folder.
+         copy: >
+            src=/root/ansiblecode/Playbooks/4.Jinja/style.css
+            dest=/var/www/html/style.css
+            owner=root
+            group=root
+            mode=0644
+         notify: Restart Nginx
+         tags:
+         - style
+       - name: Copy the javascript files to destination folder.
+         copy: >
+            src=/root/ansiblecode/Playbooks/4.Jinja/scorekeeper.js
+            dest=/var/www/html/scorekeeper.js
+            owner=root
+            group=root
+            mode=0644
+         notify: Restart Nginx
+         tags:
+         - js
+       - name: Check Nginx Port Status
+         shell: netstat -nltp | grep -i 80
+
+       - name: Check that you can connect (GET) to a page and it returns a status 200
+         ansible.builtin.uri:
+           url: http://{{ ip_address }}
+           method: GET
+
+    handlers:
+      - name: Restart Nginx
+        command: service nginx restart
