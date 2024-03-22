@@ -1,0 +1,28 @@
+#Create a vault secret file with vault_heartbeat.j2 file.
+---
+  - name: Install Elastic Heartbeat Agent On All Docker Hosts
+    hosts: pvt
+    become: yes
+    become_user: root
+    vars:
+      fqdn_name: "{{ ansible_facts['fqdn'] }}"
+    tasks:
+      - name: Install Elastic Heartbeat Agent
+        shell: |
+          curl -L -O https://artifacts.elastic.co/downloads/beats/heartbeat/heartbeat-8.11.0-amd64.deb
+          sudo dpkg -i heartbeat-8.11.0-amd64.deb
+        when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04'    
+
+      - name: Copy the heartbeat.j2 Template to elastic destination folder.
+        template: >
+           src=/root/ansiblecode/Playbooks/5.vault/heartbeat.j2
+           dest=/etc/heartbeat/heartbeat.yml
+           owner=root
+           group=root
+           mode=0644
+
+      - name: Start Uptime Heartbeat
+        shell: sudo heartbeat setup && sudo service heartbeat-elastic restart
+        #https://<elastic-cloud-url>:9243/app/uptime
+    tags:
+     - heartbeat_install

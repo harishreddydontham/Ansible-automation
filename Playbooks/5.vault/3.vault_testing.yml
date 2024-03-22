@@ -1,0 +1,78 @@
+#ansible-playbook -i invfile Playbooks/vault_testing.yml -vv --ask-vault-pass
+---
+  - name: Run AWS Cli Commands On All Servers
+    hosts: pvt
+    gather_facts: yes
+    become: yes
+    become_user: root
+    #serial: 3
+    vars:
+     user_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36373638633539613236353661353762376232336163613730356566666164366431636132626334
+          3536366134663962613366383838333933613231363635640a303730616635373331643235333963
+          30613737323937353631316432613839303364303137316230366535336537393433313163633964
+          6132396138323730340a616333383431333234386435646562663765383861376233633362616264
+          6166
+    tasks:
+       - name: Create .aws folder
+         shell: mkdir -p /root/.aws
+         ignore_errors: yes
+       - name: Copy Encrypted File To /tmp
+         copy:
+           src: /tmp/{{item}} #This Encrypted File Must Be Created Prior To Running The Playbook.
+           dest: /tmp/{{item}}
+           owner: root
+           group: root
+           mode: '0600'
+         with_items:
+         - aws_creds
+         - tls.key
+         - tls.crt
+       - name: Copy Encrypted Credentials File To .aws folder
+         copy:
+           src: /tmp/aws_creds #This Encrypted File Must Be Created Prior To Running The Playbook.
+           dest: /root/.aws/credentials
+           owner: root
+           group: root
+           mode: '0600'
+       - name: Check S3 Buckets
+         shell: aws s3 ls | cut -d " " -f 3
+         register: buckets
+       - name: Print Bucket Name
+         debug:
+          var: buckets 
+       - name: Get VPCS
+         shell: aws ec2 describe-vpcs | jq ".Vpcs[].VpcId" -r
+         register: vpcs
+       - name: Print VPC ID
+         debug:
+          var: vpcs        
+       - name: Creating admin "{{item}}"
+         user:
+           name: "{{item}}"
+           state: present
+           comment: Admin User "{{item}}"
+           groups: root
+           shell: /bin/bash
+           group: sudo
+           password: "{{ '%s' | format(user_password) | regex_replace('\n', '') | password_hash('sha512') }}"
+           password_expire_min: 1
+         with_items:
+         - anand
+         - bala
+         - chandra
+         - david
+       - name: Replace Password Authentication To Yes
+         ansible.builtin.lineinfile:
+           path: /etc/ssh/sshd_config
+           regexp: '^PasswordAuthentication no'
+           line: PasswordAuthentication yes
+           backup: yes
+         notify:
+         -  Restart SSH Service
+    handlers:
+      - name: Restart SSH Service
+        shell: service sshd restart
+      - name: Restart elastic-agent
+        shell: sudo heartbeat setup && sudo service heartbeat-elastic start
