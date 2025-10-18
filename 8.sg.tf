@@ -32,7 +32,7 @@ resource "aws_security_group" "allow_all" {
   }
 
 
-
+#sample text just 
   egress {
     from_port   = 0
     to_port     = 0
